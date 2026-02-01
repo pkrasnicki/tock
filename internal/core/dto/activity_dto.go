@@ -30,6 +30,10 @@ type ActivityFilter struct {
 	IsRunning *bool
 }
 
+type RemoveActivityRequest struct {
+	ID string
+}
+
 type Report struct {
 	Activities    []models.Activity
 	TotalDuration time.Duration

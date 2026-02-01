@@ -25,6 +25,7 @@ const (
 )
 
 type twInterval struct {
+	ID         string   `json:"id,omitempty"`
 	Start      string   `json:"start"`
 	End        string   `json:"end,omitempty"`
 	Tags       []string `json:"tags,omitempty"`
@@ -145,7 +146,7 @@ func (r *repository) Save(_ context.Context, activity models.Activity) error {
 	// Check if we are updating an existing interval (e.g. stopping it)
 	updated := false
 	for i := len(intervals) - 1; i >= 0; i-- {
-		if intervals[i].Start == newInterval.Start {
+		if intervals[i].ID == newInterval.ID {
 			intervals[i] = newInterval
 			updated = true
 			break
@@ -162,6 +163,43 @@ func (r *repository) Save(_ context.Context, activity models.Activity) error {
 	})
 
 	return r.writeIntervalsToFile(filePath, intervals)
+}
+
+func (r *repository) Delete(_ context.Context, id string) error {
+	// We need to search across all months since we don't know which month the activity is in
+	// Search back 12 months
+	current := time.Now()
+	for range 12 {
+		filePath := r.getMonthFilePath(current)
+		intervals, err := r.readIntervalsFromFile(filePath)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return errors.Wrap(err, "read intervals")
+			}
+			current = current.AddDate(0, -1, 0)
+			continue
+		}
+
+		// Find and remove the interval with matching ID
+		found := false
+		newIntervals := make([]twInterval, 0, len(intervals))
+
+		for _, iv := range intervals {
+			if iv.ID == id {
+				found = true
+				continue // Skip this interval to delete it
+			}
+			newIntervals = append(newIntervals, iv)
+		}
+
+		if found {
+			return r.writeIntervalsToFile(filePath, newIntervals)
+		}
+
+		current = current.AddDate(0, -1, 0)
+	}
+
+	return coreErrors.ErrActivityNotFound
 }
 
 func (r *repository) getMonthFilePath(t time.Time) string {
@@ -260,6 +298,7 @@ func (r *repository) writeIntervalsToFile(path string, intervals []twInterval) e
 
 func toTWInterval(a models.Activity) twInterval {
 	iv := twInterval{
+		ID:         a.ID,
 		Start:      a.StartTime.UTC().Format(timeLayout),
 		Annotation: a.Description,
 	}
@@ -293,7 +332,14 @@ func fromTWInterval(iv twInterval) (models.Activity, error) {
 		project = iv.Tags[0]
 	}
 
+	// Generate stable ID if not present (legacy format)
+	id := iv.ID
+	if id == "" {
+		id = models.GenerateStableID(start.Local(), project, iv.Annotation)
+	}
+
 	return models.Activity{
+		ID:          id,
 		Project:     project,
 		Description: iv.Annotation,
 		StartTime:   start.Local(),

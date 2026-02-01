@@ -33,6 +33,7 @@ func (h *Handler) RegisterRoutes() {
 	http.HandleFunc("/activity/start", cors(h.Start))
 	http.HandleFunc("/activity/stop", cors(h.Stop))
 	http.HandleFunc("/activity/add", cors(h.Add))
+	http.HandleFunc("/activity/remove", cors(h.Remove))
 	http.HandleFunc("/activity/list", cors(h.List))
 	http.HandleFunc("/activity/current", cors(h.Current))
 	http.HandleFunc("/activity/recent", cors(h.Recent))

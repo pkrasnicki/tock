@@ -23,9 +23,22 @@ func ParseActivity(line string) (*models.Activity, error) {
 		return nil, ErrSkip // Not an activity line
 	}
 
-	timePart := strings.TrimSpace(parts[0])
-	project := strings.TrimSpace(parts[1])
-	description := strings.TrimSpace(parts[2])
+	// Format: [ID|]time|project|description or time|project|description (legacy)
+	var id, timePart, project, description string
+
+	if len(parts) >= 4 {
+		// New format with ID
+		id = strings.TrimSpace(parts[0])
+		timePart = strings.TrimSpace(parts[1])
+		project = strings.TrimSpace(parts[2])
+		description = strings.TrimSpace(parts[3])
+	} else {
+		// Legacy format without ID
+		id = "" // Will be generated if needed
+		timePart = strings.TrimSpace(parts[0])
+		project = strings.TrimSpace(parts[1])
+		description = strings.TrimSpace(parts[2])
+	}
 
 	var start, end time.Time
 	var err error
@@ -40,7 +53,14 @@ func ParseActivity(line string) (*models.Activity, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "parse end time")
 		}
+
+		// Generate stable ID if not present (legacy format)
+		if id == "" {
+			id = models.GenerateStableID(start, project, description)
+		}
+
 		return &models.Activity{
+			ID:          id,
 			StartTime:   start,
 			EndTime:     &end,
 			Project:     project,
@@ -53,7 +73,13 @@ func ParseActivity(line string) (*models.Activity, error) {
 		return nil, errors.Wrap(err, "parse start time")
 	}
 
+	// Generate stable ID if not present (legacy format)
+	if id == "" {
+		id = models.GenerateStableID(start, project, description)
+	}
+
 	return &models.Activity{
+		ID:          id,
 		StartTime:   start,
 		EndTime:     nil,
 		Project:     project,
@@ -74,7 +100,7 @@ func FormatActivity(a models.Activity) string {
 
 	if a.EndTime != nil {
 		endStr := a.EndTime.Format(timeLayoutMin)
-		return fmt.Sprintf("%s - %s | %s | %s", startStr, endStr, a.Project, a.Description)
+		return fmt.Sprintf("%s | %s - %s | %s | %s", a.ID, startStr, endStr, a.Project, a.Description)
 	}
-	return fmt.Sprintf("%s | %s | %s", startStr, a.Project, a.Description)
+	return fmt.Sprintf("%s | %s | %s | %s", a.ID, startStr, a.Project, a.Description)
 }

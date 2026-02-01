@@ -36,6 +36,7 @@ func (s *service) Start(ctx context.Context, req dto.StartActivityRequest) (*mod
 	}
 
 	newActivity := models.Activity{
+		ID:          models.GenerateID(),
 		Description: req.Description,
 		Project:     req.Project,
 		StartTime:   req.StartTime,
@@ -89,6 +90,7 @@ func (s *service) Stop(ctx context.Context, req dto.StopActivityRequest) (*model
 
 func (s *service) Add(ctx context.Context, req dto.AddActivityRequest) (*models.Activity, error) {
 	newActivity := models.Activity{
+		ID:          models.GenerateID(),
 		Description: req.Description,
 		Project:     req.Project,
 		StartTime:   req.StartTime,
@@ -99,6 +101,13 @@ func (s *service) Add(ctx context.Context, req dto.AddActivityRequest) (*models.
 		return nil, errors.Wrap(saveErr, "save activity")
 	}
 	return &newActivity, nil
+}
+
+func (s *service) Remove(ctx context.Context, req dto.RemoveActivityRequest) error {
+	if err := s.repo.Delete(ctx, req.ID); err != nil {
+		return errors.Wrap(err, "delete activity")
+	}
+	return nil
 }
 
 func (s *service) List(ctx context.Context, filter dto.ActivityFilter) ([]models.Activity, error) {

@@ -131,16 +131,14 @@ func (r *repository) Save(_ context.Context, activity models.Activity) error {
 
 	// Check if we are updating an existing activity
 	updated := false
-	// Iterate backwards to find the most recent entry (though StartTime should be unique)
+	// Iterate backwards to find the most recent entry
 	for i := len(lines) - 1; i >= 0; i-- {
 		if strings.TrimSpace(lines[i]) == "" {
 			continue
 		}
 		act, _ := ParseActivity(lines[i])
-		// We identify the activity by StartTime.
-		// Since file format might have lower precision (minutes), we compare formatted strings or truncated times.
-		// Using Unix() comparison for simplicity, assuming minute precision is enough for uniqueness in this context.
-		if act != nil && act.StartTime.Unix()/60 == activity.StartTime.Unix()/60 {
+		// We identify the activity by ID
+		if act != nil && act.ID == activity.ID {
 			lines[i] = FormatActivity(activity)
 			updated = true
 			break
@@ -152,6 +150,38 @@ func (r *repository) Save(_ context.Context, activity models.Activity) error {
 	}
 
 	if writeErr := r.writeLines(lines); writeErr != nil {
+		return errors.Wrap(writeErr, "write lines")
+	}
+	return nil
+}
+
+func (r *repository) Delete(_ context.Context, id string) error {
+	lines, err := r.readLines()
+	if err != nil {
+		return errors.Wrap(err, "read lines")
+	}
+
+	var newLines []string
+	deleted := false
+
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			newLines = append(newLines, line)
+			continue
+		}
+		act, _ := ParseActivity(line)
+		if act != nil && act.ID == id {
+			deleted = true
+			continue // Skip this line to delete it
+		}
+		newLines = append(newLines, line)
+	}
+
+	if !deleted {
+		return coreErrors.ErrActivityNotFound
+	}
+
+	if writeErr := r.writeLines(newLines); writeErr != nil {
 		return errors.Wrap(writeErr, "write lines")
 	}
 	return nil

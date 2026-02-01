@@ -229,6 +229,75 @@ paths:
               schema:
                 type: string
 
+  /activity/remove:
+    delete:
+      tags:
+        - Activity
+      summary: Remove an activity
+      description: Remove an activity by its unique identifier. Each activity has a unique ID that can be obtained from list, current, or recent endpoints.
+      operationId: removeActivity
+      requestBody:
+        description: Activity identifier
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveActivityRequest'
+            examples:
+              basic:
+                summary: Remove activity by ID
+                value:
+                  id: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+      responses:
+        '204':
+          description: Activity removed successfully
+        '400':
+          description: Invalid request body or missing id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '405':
+          description: Method not allowed
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Failed to remove activity (activity not found or error occurred)
+          content:
+            text/plain:
+              schema:
+                type: string
+    post:
+      tags:
+        - Activity
+      summary: Remove an activity (via POST)
+      description: Alternative POST method to remove an activity by its unique identifier
+      operationId: removeActivityPost
+      requestBody:
+        description: Activity identifier
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RemoveActivityRequest'
+      responses:
+        '204':
+          description: Activity removed successfully
+        '400':
+          description: Invalid request body or missing id
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Failed to remove activity
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /activity/list:
     get:
       tags:
@@ -395,10 +464,15 @@ components:
       type: object
       description: A time tracking activity entry
       required:
+        - id
         - description
         - project
         - startTime
       properties:
+        id:
+          type: string
+          description: Unique identifier for the activity
+          example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
         description:
           type: string
           description: Description of the activity
@@ -474,6 +548,17 @@ components:
           format: date-time
           description: When the activity ended
           example: "2026-02-01T15:00:00Z"
+
+    RemoveActivityRequest:
+      type: object
+      description: Request to remove an activity by its unique identifier
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the activity to remove
+          example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
 
     Report:
       type: object
