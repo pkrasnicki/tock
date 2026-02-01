@@ -109,11 +109,11 @@ func parseTime(s string) (time.Time, error) {
 }
 
 func FormatActivity(a models.Activity) string {
-	startStr := a.StartTime.Format(timeLayoutMin)
+	startStr := a.StartTime.Format(timeLayoutSec)
 	attributesStr := formatAttributes(a.Attributes)
 
 	if a.EndTime != nil {
-		endStr := a.EndTime.Format(timeLayoutMin)
+		endStr := a.EndTime.Format(timeLayoutSec)
 		if attributesStr != "" {
 			return fmt.Sprintf("%s | %s - %s | %s | %s | %s", a.ID, startStr, endStr, a.Project, a.Description, attributesStr)
 		}
