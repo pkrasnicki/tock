@@ -7,20 +7,34 @@ import (
 )
 
 type Handler struct {
-	service ports.ActivityResolver
+	service    ports.ActivityResolver
+	corsConfig CORSConfig
 }
 
 func NewHandler(service ports.ActivityResolver) *Handler {
-	return &Handler{service: service}
+	return &Handler{
+		service:    service,
+		corsConfig: DefaultCORSConfig(),
+	}
+}
+
+// NewHandlerWithCORS creates a new handler with custom CORS configuration
+func NewHandlerWithCORS(service ports.ActivityResolver, corsConfig CORSConfig) *Handler {
+	return &Handler{
+		service:    service,
+		corsConfig: corsConfig,
+	}
 }
 
 // RegisterRoutes registers all activity routes with the default ServeMux
 func (h *Handler) RegisterRoutes() {
-	http.HandleFunc("/activity/start", h.Start)
-	http.HandleFunc("/activity/stop", h.Stop)
-	http.HandleFunc("/activity/add", h.Add)
-	http.HandleFunc("/activity/list", h.List)
-	http.HandleFunc("/activity/current", h.Current)
-	http.HandleFunc("/activity/recent", h.Recent)
-	http.HandleFunc("/activity/report", h.Report)
+	cors := CORSMiddleware(h.corsConfig)
+
+	http.HandleFunc("/activity/start", cors(h.Start))
+	http.HandleFunc("/activity/stop", cors(h.Stop))
+	http.HandleFunc("/activity/add", cors(h.Add))
+	http.HandleFunc("/activity/list", cors(h.List))
+	http.HandleFunc("/activity/current", cors(h.Current))
+	http.HandleFunc("/activity/recent", cors(h.Recent))
+	http.HandleFunc("/activity/report", cors(h.Report))
 }

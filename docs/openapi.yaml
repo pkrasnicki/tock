@@ -1,0 +1,532 @@
+openapi: 3.0.3
+info:
+  title: Tock - Time Tracking API
+  description: |
+    REST API for the Tock time tracking application.
+    
+    This API allows you to:
+    - Start and stop time tracking activities
+    - Add historical activities
+    - List and filter activities
+    - Get current running activities
+    - View recent activities
+    - Generate activity reports
+  version: 1.0.0
+  contact:
+    name: Tock API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: Activity
+    description: Time tracking activity operations
+
+paths:
+  /activity/start:
+    post:
+      tags:
+        - Activity
+      summary: Start a new activity
+      description: |
+        Starts a new time tracking activity. If no start time is provided, the current time is used.
+        Can be called with either POST (JSON body) or GET (query parameters).
+      operationId: startActivity
+      requestBody:
+        description: Activity details to start tracking
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartActivityRequest'
+            examples:
+              minimal:
+                summary: Minimal request
+                value:
+                  description: "Working on feature X"
+              withProject:
+                summary: With project
+                value:
+                  description: "Code review"
+                  project: "backend-api"
+              withStartTime:
+                summary: With custom start time
+                value:
+                  description: "Meeting"
+                  project: "project-alpha"
+                  startTime: "2026-02-01T09:00:00Z"
+      parameters:
+        - name: description
+          in: query
+          description: Activity description (alternative to JSON body)
+          required: false
+          schema:
+            type: string
+        - name: project
+          in: query
+          description: Project name (alternative to JSON body)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '400':
+          description: Invalid request body
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Failed to start activity
+          content:
+            text/plain:
+              schema:
+                type: string
+    get:
+      tags:
+        - Activity
+      summary: Start a new activity (via GET)
+      description: Alternative GET method to start an activity using query parameters
+      operationId: startActivityGet
+      parameters:
+        - name: description
+          in: query
+          description: Activity description
+          required: false
+          schema:
+            type: string
+        - name: project
+          in: query
+          description: Project name
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity started successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '500':
+          description: Failed to start activity
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /activity/stop:
+    post:
+      tags:
+        - Activity
+      summary: Stop the current activity
+      description: |
+        Stops the currently running activity. If no end time is provided, the current time is used.
+        Can be called with either POST (JSON body) or GET (no body).
+      operationId: stopActivity
+      requestBody:
+        description: Optional end time for the activity
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StopActivityRequest'
+            examples:
+              default:
+                summary: Stop at current time
+                value: {}
+              withEndTime:
+                summary: Stop at specific time
+                value:
+                  endTime: "2026-02-01T17:30:00Z"
+      responses:
+        '200':
+          description: Activity stopped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '500':
+          description: Failed to stop activity
+          content:
+            text/plain:
+              schema:
+                type: string
+    get:
+      tags:
+        - Activity
+      summary: Stop the current activity (via GET)
+      description: Alternative GET method to stop the current activity
+      operationId: stopActivityGet
+      responses:
+        '200':
+          description: Activity stopped successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '500':
+          description: Failed to stop activity
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /activity/add:
+    post:
+      tags:
+        - Activity
+      summary: Add a completed activity
+      description: Add a historical activity with both start and end times
+      operationId: addActivity
+      requestBody:
+        description: Complete activity details
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddActivityRequest'
+            examples:
+              complete:
+                summary: Complete activity
+                value:
+                  description: "Morning standup"
+                  project: "team-meetings"
+                  startTime: "2026-02-01T09:00:00Z"
+                  endTime: "2026-02-01T09:15:00Z"
+      responses:
+        '200':
+          description: Activity added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Activity'
+        '400':
+          description: Invalid request body
+          content:
+            text/plain:
+              schema:
+                type: string
+        '405':
+          description: Method not allowed (only POST is supported)
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Failed to add activity
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /activity/list:
+    get:
+      tags:
+        - Activity
+      summary: List activities
+      description: |
+        List activities with optional filters. Supports filtering by date range, project, and running status.
+      operationId: listActivities
+      parameters:
+        - name: from
+          in: query
+          description: Start date filter (RFC3339 format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2026-02-01T00:00:00Z"
+        - name: to
+          in: query
+          description: End date filter (RFC3339 format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2026-02-01T23:59:59Z"
+        - name: project
+          in: query
+          description: Filter by project name
+          required: false
+          schema:
+            type: string
+          example: "backend-api"
+        - name: running
+          in: query
+          description: Filter by running status
+          required: false
+          schema:
+            type: boolean
+          example: true
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '500':
+          description: Failed to list activities
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /activity/current:
+    get:
+      tags:
+        - Activity
+      summary: Get current running activities
+      description: Returns all currently running activities (activities without an end time). Returns 204 No Content if there are no running activities.
+      operationId: getCurrentActivities
+      responses:
+        '200':
+          description: List of current running activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '204':
+          description: No running activities
+        '500':
+          description: Failed to get current activities
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /activity/recent:
+    get:
+      tags:
+        - Activity
+      summary: Get recent activities
+      description: Returns the most recent activities, limited by the specified count
+      operationId: getRecentActivities
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of activities to return
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+          example: 20
+      responses:
+        '200':
+          description: List of recent activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activity'
+        '500':
+          description: Failed to get recent activities
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /activity/report:
+    get:
+      tags:
+        - Activity
+      summary: Generate activity report
+      description: |
+        Generates a comprehensive report of activities with total duration and breakdown by project.
+        Supports filtering by date range and project.
+      operationId: getActivityReport
+      parameters:
+        - name: from
+          in: query
+          description: Start date filter (RFC3339 format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2026-02-01T00:00:00Z"
+        - name: to
+          in: query
+          description: End date filter (RFC3339 format)
+          required: false
+          schema:
+            type: string
+            format: date-time
+          example: "2026-02-01T23:59:59Z"
+        - name: project
+          in: query
+          description: Filter by project name
+          required: false
+          schema:
+            type: string
+          example: "backend-api"
+      responses:
+        '200':
+          description: Activity report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '500':
+          description: Failed to get report
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  schemas:
+    Activity:
+      type: object
+      description: A time tracking activity entry
+      required:
+        - description
+        - project
+        - startTime
+      properties:
+        description:
+          type: string
+          description: Description of the activity
+          example: "Code review for PR #123"
+        project:
+          type: string
+          description: Project name or identifier
+          example: "backend-api"
+        startTime:
+          type: string
+          format: date-time
+          description: When the activity started (RFC3339 format)
+          example: "2026-02-01T09:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the activity ended (null if still running)
+          example: "2026-02-01T10:30:00Z"
+
+    StartActivityRequest:
+      type: object
+      description: Request to start a new activity
+      properties:
+        description:
+          type: string
+          description: Description of the activity
+          example: "Working on authentication feature"
+        project:
+          type: string
+          description: Project name or identifier
+          example: "backend-api"
+        startTime:
+          type: string
+          format: date-time
+          description: Custom start time (defaults to current time if not provided)
+          example: "2026-02-01T09:00:00Z"
+
+    StopActivityRequest:
+      type: object
+      description: Request to stop the current activity
+      properties:
+        endTime:
+          type: string
+          format: date-time
+          description: Custom end time (defaults to current time if not provided)
+          example: "2026-02-01T17:30:00Z"
+
+    AddActivityRequest:
+      type: object
+      description: Request to add a completed historical activity
+      required:
+        - description
+        - project
+        - startTime
+        - endTime
+      properties:
+        description:
+          type: string
+          description: Description of the activity
+          example: "Team meeting"
+        project:
+          type: string
+          description: Project name or identifier
+          example: "team-meetings"
+        startTime:
+          type: string
+          format: date-time
+          description: When the activity started
+          example: "2026-02-01T14:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          description: When the activity ended
+          example: "2026-02-01T15:00:00Z"
+
+    Report:
+      type: object
+      description: Activity report with totals and breakdown by project
+      required:
+        - activities
+        - totalDuration
+        - byProject
+      properties:
+        activities:
+          type: array
+          description: List of all activities in the report
+          items:
+            $ref: '#/components/schemas/Activity'
+        totalDuration:
+          type: integer
+          format: int64
+          description: Total duration of all activities in nanoseconds
+          example: 7200000000000
+        byProject:
+          type: object
+          description: Breakdown of activities by project
+          additionalProperties:
+            $ref: '#/components/schemas/ProjectReport'
+          example:
+            backend-api:
+              projectName: "backend-api"
+              duration: 5400000000000
+              activities: []
+            team-meetings:
+              projectName: "team-meetings"
+              duration: 1800000000000
+              activities: []
+
+    ProjectReport:
+      type: object
+      description: Activity report for a specific project
+      required:
+        - projectName
+        - duration
+        - activities
+      properties:
+        projectName:
+          type: string
+          description: Name of the project
+          example: "backend-api"
+        duration:
+          type: integer
+          format: int64
+          description: Total duration for this project in nanoseconds
+          example: 5400000000000
+        activities:
+          type: array
+          description: List of activities for this project
+          items:
+            $ref: '#/components/schemas/Activity'
