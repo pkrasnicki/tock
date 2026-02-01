@@ -9,12 +9,13 @@ import (
 )
 
 type Config struct {
-	Backend     string            `mapstructure:"backend"`
-	File        FileConfig        `mapstructure:"file"`
-	Timewarrior TimewarriorConfig `mapstructure:"timewarrior"`
-	Theme       ThemeConfig       `mapstructure:"theme"`
-	TimeFormat  string            `mapstructure:"time_format"`
-	Export      ExportConfig      `mapstructure:"export"`
+	Backend           string             `mapstructure:"backend"`
+	File              FileConfig         `mapstructure:"file"`
+	Timewarrior       TimewarriorConfig  `mapstructure:"timewarrior"`
+	Theme             ThemeConfig        `mapstructure:"theme"`
+	TimeFormat        string             `mapstructure:"time_format"`
+	Export            ExportConfig       `mapstructure:"export"`
+	AttributePatterns []AttributePattern `mapstructure:"attribute_patterns"`
 }
 
 type ExportConfig struct {
@@ -23,6 +24,11 @@ type ExportConfig struct {
 
 type ICalConfig struct {
 	FileName string `mapstructure:"file_name"`
+}
+
+type AttributePattern struct {
+	Pattern    string            `mapstructure:"pattern"`
+	Attributes map[string]string `mapstructure:"attributes"`
 }
 
 type FileConfig struct {

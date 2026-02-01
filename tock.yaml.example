@@ -33,6 +33,23 @@ export:
 # time_format: "24"  # 24-hour format (default): 15:04
 # time_format: "12"  # 12-hour format: 03:04 PM
 
+# Attribute patterns - automatically add attributes based on git branch name
+# Supports regex capture groups using $1, $2, etc. in attribute values
+# attribute_patterns:
+#   - pattern: "^feature/(PROJ-\\d+)"
+#     attributes:
+#       type: "feature"
+#       ticket: "$1"           # Will be replaced with captured group (e.g., PROJ-242)
+#   - pattern: "^bugfix/.*"
+#     attributes:
+#       type: "bugfix"
+#       priority: "high"
+#   - pattern: "^([A-Z]+)-(\\d+)-.*"
+#     attributes:
+#       project: "$1"          # First capture group (e.g., PROJ)
+#       ticket-id: "$2"        # Second capture group (e.g., 242)
+#       full-ref: "$0"         # Full match
+
 # Theme configuration
 theme:
   # Theme name: dark, light, or custom
