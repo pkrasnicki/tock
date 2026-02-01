@@ -1,0 +1,8 @@
+### Get 10 most recent activities (default)
+GET http://localhost:8080/activity/recent
+
+### Get 5 most recent activities
+GET http://localhost:8080/activity/recent?limit=5
+
+### Get 20 most recent activities
+GET http://localhost:8080/activity/recent?limit=20

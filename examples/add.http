@@ -1,0 +1,21 @@
+### Add a completed activity
+POST http://localhost:8080/activity/add
+Content-Type: application/json
+
+{
+  "Description": "Morning standup meeting",
+  "Project": "TEAM",
+  "StartTime": "2026-01-31T09:00:00Z",
+  "EndTime": "2026-01-31T09:30:00Z"
+}
+
+### Add another completed activity
+POST http://localhost:8080/activity/add
+Content-Type: application/json
+
+{
+  "Description": "Code review",
+  "Project": "TOCK",
+  "StartTime": "2026-01-31T10:00:00Z",
+  "EndTime": "2026-01-31T11:15:00Z"
+}

@@ -1,0 +1,2 @@
+### Get all currently running activities
+GET http://localhost:8080/activity/current

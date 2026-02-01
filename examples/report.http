@@ -1,0 +1,11 @@
+### Get report for all activities
+GET http://localhost:8080/activity/report
+
+### Get report with date range
+GET http://localhost:8080/activity/report?from=2026-01-01T00:00:00Z&to=2026-01-31T23:59:59Z
+
+### Get report for specific project
+GET http://localhost:8080/activity/report?project=TOCK
+
+### Get report with multiple filters
+GET http://localhost:8080/activity/report?from=2026-01-31T00:00:00Z&to=2026-01-31T23:59:59Z&project=TOCK

@@ -1,0 +1,13 @@
+### Stop current activity (with current time)
+GET http://localhost:8080/activity/stop
+
+### Stop activity with POST (current time)
+POST http://localhost:8080/activity/stop
+
+### Stop activity with specific end time
+POST http://localhost:8080/activity/stop
+Content-Type: application/json
+
+{
+  "EndTime": "2026-01-31T12:30:00Z"
+}

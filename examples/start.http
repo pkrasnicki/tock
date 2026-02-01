@@ -1,0 +1,21 @@
+### Start activity with POST (JSON body)
+POST http://localhost:8080/activity/start
+Content-Type: application/json
+
+{
+  "Description": "Working on HTTP API",
+  "Project": "TOCK",
+  "StartTime": "2026-01-31T10:00:00Z"
+}
+
+### Start activity with GET (query parameters)
+GET http://localhost:8080/activity/start?project=TOCK&description=Working%20on%20HTTP%20API
+
+### Start activity with POST (current time)
+POST http://localhost:8080/activity/start
+Content-Type: application/json
+
+{
+  "Description": "Code review",
+  "Project": "TOCK"
+}
