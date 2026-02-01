@@ -47,18 +47,18 @@ paths:
               minimal:
                 summary: Minimal request
                 value:
-                  description: "Working on feature X"
+                  Description: "Working on feature X"
               withProject:
                 summary: With project
                 value:
-                  description: "Code review"
-                  project: "backend-api"
+                  Description: "Code review"
+                  Project: "backend-api"
               withStartTime:
                 summary: With custom start time
                 value:
-                  description: "Meeting"
-                  project: "project-alpha"
-                  startTime: "2026-02-01T09:00:00Z"
+                  Description: "Meeting"
+                  Project: "project-alpha"
+                  StartTime: "2026-02-01T09:00:00Z"
       parameters:
         - name: description
           in: query
@@ -147,7 +147,7 @@ paths:
               withEndTime:
                 summary: Stop at specific time
                 value:
-                  endTime: "2026-02-01T17:30:00Z"
+                  EndTime: "2026-02-01T17:30:00Z"
       responses:
         '200':
           description: Activity stopped successfully
@@ -199,10 +199,10 @@ paths:
               complete:
                 summary: Complete activity
                 value:
-                  description: "Morning standup"
-                  project: "team-meetings"
-                  startTime: "2026-02-01T09:00:00Z"
-                  endTime: "2026-02-01T09:15:00Z"
+                  Description: "Morning standup"
+                  Project: "team-meetings"
+                  StartTime: "2026-02-01T09:00:00Z"
+                  EndTime: "2026-02-01T09:15:00Z"
       responses:
         '200':
           description: Activity added successfully
@@ -247,7 +247,7 @@ paths:
               basic:
                 summary: Remove activity by ID
                 value:
-                  id: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+                  ID: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
       responses:
         '204':
           description: Activity removed successfully
@@ -464,58 +464,69 @@ components:
       type: object
       description: A time tracking activity entry
       required:
-        - id
-        - description
-        - project
-        - startTime
+        - ID
+        - Description
+        - Project
+        - StartTime
+        - Attributes
       properties:
-        id:
+        ID:
           type: string
           description: Unique identifier for the activity
           example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
-        description:
+        Description:
           type: string
           description: Description of the activity
           example: "Code review for PR #123"
-        project:
+        Project:
           type: string
           description: Project name or identifier
           example: "backend-api"
-        startTime:
+        StartTime:
           type: string
           format: date-time
           description: When the activity started (RFC3339 format)
           example: "2026-02-01T09:00:00Z"
-        endTime:
+        EndTime:
           type: string
           format: date-time
           nullable: true
           description: When the activity ended (null if still running)
           example: "2026-02-01T10:30:00Z"
+        Attributes:
+          type: array
+          description: List of key-value attributes attached to the activity
+          items:
+            $ref: '#/components/schemas/Attribute'
 
     StartActivityRequest:
       type: object
       description: Request to start a new activity
       properties:
-        description:
+        Description:
           type: string
           description: Description of the activity
           example: "Working on authentication feature"
-        project:
+        Project:
           type: string
           description: Project name or identifier
           example: "backend-api"
-        startTime:
+        StartTime:
           type: string
           format: date-time
           description: Custom start time (defaults to current time if not provided)
           example: "2026-02-01T09:00:00Z"
+        Attributes:
+          type: array
+          description: List of key-value attributes to attach to the activity
+          items:
+            $ref: '#/components/schemas/Attribute'
 
     StopActivityRequest:
       type: object
       description: Request to stop the current activity
       properties:
-        endTime:
+        EndTime:
           type: string
           format: date-time
           description: Custom end time (defaults to current time if not provided)
@@ -525,37 +536,42 @@ components:
       type: object
       description: Request to add a completed historical activity
       required:
-        - description
-        - project
-        - startTime
-        - endTime
+        - Description
+        - Project
+        - StartTime
+        - EndTime
       properties:
-        description:
+        Description:
           type: string
           description: Description of the activity
           example: "Team meeting"
-        project:
+        Project:
           type: string
           description: Project name or identifier
           example: "team-meetings"
-        startTime:
+        StartTime:
           type: string
           format: date-time
           description: When the activity started
           example: "2026-02-01T14:00:00Z"
-        endTime:
+        EndTime:
           type: string
           format: date-time
           description: When the activity ended
           example: "2026-02-01T15:00:00Z"
+        Attributes:
+          type: array
+          description: List of key-value attributes to attach to the activity
+          items:
+            $ref: '#/components/schemas/Attribute'
 
     RemoveActivityRequest:
       type: object
       description: Request to remove an activity by its unique identifier
       required:
-        - id
+        - ID
       properties:
-        id:
+        ID:
           type: string
           description: Unique identifier of the activity to remove
           example: "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
@@ -564,54 +580,70 @@ components:
       type: object
       description: Activity report with totals and breakdown by project
       required:
-        - activities
-        - totalDuration
-        - byProject
+        - Activities
+        - TotalDuration
+        - ByProject
       properties:
-        activities:
+        Activities:
           type: array
           description: List of all activities in the report
           items:
             $ref: '#/components/schemas/Activity'
-        totalDuration:
+        TotalDuration:
           type: integer
           format: int64
           description: Total duration of all activities in nanoseconds
           example: 7200000000000
-        byProject:
+        ByProject:
           type: object
           description: Breakdown of activities by project
           additionalProperties:
             $ref: '#/components/schemas/ProjectReport'
           example:
             backend-api:
-              projectName: "backend-api"
-              duration: 5400000000000
-              activities: []
+              ProjectName: "backend-api"
+              Duration: 5400000000000
+              Activities: []
             team-meetings:
-              projectName: "team-meetings"
-              duration: 1800000000000
-              activities: []
+              ProjectName: "team-meetings"
+              Duration: 1800000000000
+              Activities: []
 
     ProjectReport:
       type: object
       description: Activity report for a specific project
       required:
-        - projectName
-        - duration
-        - activities
+        - ProjectName
+        - Duration
+        - Activities
       properties:
-        projectName:
+        ProjectName:
           type: string
           description: Name of the project
           example: "backend-api"
-        duration:
+        Duration:
           type: integer
           format: int64
           description: Total duration for this project in nanoseconds
           example: 5400000000000
-        activities:
+        Activities:
           type: array
           description: List of activities for this project
           items:
             $ref: '#/components/schemas/Activity'
+
+    Attribute:
+      type: object
+      description: A key-value pair that can be attached to an activity
+      required:
+        - Key
+        - Value
+      properties:
+        Key:
+          type: string
+          description: Attribute key/name
+          example: "billable"
+        Value:
+          type: string
+          description: Attribute value
+          example: "true"

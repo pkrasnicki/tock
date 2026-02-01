@@ -10,6 +10,7 @@ type StartActivityRequest struct {
 	Description string
 	Project     string
 	StartTime   time.Time
+	Attributes  []models.Attribute
 }
 
 type StopActivityRequest struct {
@@ -21,6 +22,7 @@ type AddActivityRequest struct {
 	Project     string
 	StartTime   time.Time
 	EndTime     time.Time
+	Attributes  []models.Attribute
 }
 
 type ActivityFilter struct {

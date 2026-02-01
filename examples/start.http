@@ -19,3 +19,26 @@ Content-Type: application/json
   "Description": "Code review",
   "Project": "TOCK"
 }
+
+### Start activity with attributes
+POST http://localhost:8080/activity/start
+Content-Type: application/json
+
+{
+  "Description": "Client consultation",
+  "Project": "CONSULTING",
+  "Attributes": [
+    {
+      "Key": "billable",
+      "Value": "true"
+    },
+    {
+      "Key": "client",
+      "Value": "acme-corp"
+    },
+    {
+      "Key": "priority",
+      "Value": "high"
+    }
+  ]
+}

@@ -40,10 +40,15 @@ func (s *service) Start(ctx context.Context, req dto.StartActivityRequest) (*mod
 		Description: req.Description,
 		Project:     req.Project,
 		StartTime:   req.StartTime,
+		Attributes:  req.Attributes,
 	}
 
 	if newActivity.StartTime.IsZero() {
 		newActivity.StartTime = time.Now()
+	}
+
+	if newActivity.Attributes == nil {
+		newActivity.Attributes = []models.Attribute{}
 	}
 
 	if saveErr := s.repo.Save(ctx, newActivity); saveErr != nil {
@@ -95,6 +100,11 @@ func (s *service) Add(ctx context.Context, req dto.AddActivityRequest) (*models.
 		Project:     req.Project,
 		StartTime:   req.StartTime,
 		EndTime:     &req.EndTime,
+		Attributes:  req.Attributes,
+	}
+
+	if newActivity.Attributes == nil {
+		newActivity.Attributes = []models.Attribute{}
 	}
 
 	if saveErr := s.repo.Save(ctx, newActivity); saveErr != nil {

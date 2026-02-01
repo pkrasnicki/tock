@@ -305,9 +305,17 @@ func toTWInterval(a models.Activity) twInterval {
 	if a.EndTime != nil {
 		iv.End = a.EndTime.UTC().Format(timeLayout)
 	}
+
+	// First tag is the project
 	if a.Project != "" {
 		iv.Tags = []string{a.Project}
 	}
+
+	// Additional tags are attributes in key:value format
+	for _, attr := range a.Attributes {
+		iv.Tags = append(iv.Tags, fmt.Sprintf("%s:%s", attr.Key, attr.Value))
+	}
+
 	return iv
 }
 
@@ -328,8 +336,27 @@ func fromTWInterval(iv twInterval) (models.Activity, error) {
 	}
 
 	project := ""
+	var attributes []models.Attribute
+
 	if len(iv.Tags) > 0 {
+		// First tag is the project
 		project = iv.Tags[0]
+
+		// Remaining tags are attributes in key:value format
+		for i := 1; i < len(iv.Tags); i++ {
+			tag := iv.Tags[i]
+			if parts := strings.SplitN(tag, ":", 2); len(parts) == 2 {
+				attributes = append(attributes, models.Attribute{
+					Key:   parts[0],
+					Value: parts[1],
+				})
+			}
+		}
+	}
+
+	// Ensure attributes is never nil
+	if attributes == nil {
+		attributes = []models.Attribute{}
 	}
 
 	// Generate stable ID if not present (legacy format)
@@ -344,6 +371,7 @@ func fromTWInterval(iv twInterval) (models.Activity, error) {
 		Description: iv.Annotation,
 		StartTime:   start.Local(),
 		EndTime:     end,
+		Attributes:  attributes,
 	}, nil
 }
 

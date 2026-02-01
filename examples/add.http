@@ -19,3 +19,28 @@ Content-Type: application/json
   "StartTime": "2026-01-31T10:00:00Z",
   "EndTime": "2026-01-31T11:15:00Z"
 }
+
+### Add activity with attributes
+POST http://localhost:8080/activity/add
+Content-Type: application/json
+
+{
+  "Description": "Client meeting",
+  "Project": "CONSULTING",
+  "StartTime": "2026-01-31T14:00:00Z",
+  "EndTime": "2026-01-31T15:30:00Z",
+  "Attributes": [
+    {
+      "Key": "billable",
+      "Value": "true"
+    },
+    {
+      "Key": "client",
+      "Value": "widget-inc"
+    },
+    {
+      "Key": "rate",
+      "Value": "150"
+    }
+  ]
+}

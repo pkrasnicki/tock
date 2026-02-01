@@ -10,11 +10,19 @@ import (
 
 // Activity represents a time tracking entry.
 type Activity struct {
-	ID          string
-	Description string
-	Project     string
-	StartTime   time.Time
-	EndTime     *time.Time // nil if active
+	ID          string      `json:"ID"`
+	Description string      `json:"Description"`
+	Project     string      `json:"Project"`
+	StartTime   time.Time   `json:"StartTime"`
+	EndTime     *time.Time  `json:"EndTime,omitempty"`
+	Attributes  []Attribute `json:"Attributes"`
+}
+
+// NewActivity creates a new Activity with an empty attributes slice
+func NewActivity() Activity {
+	return Activity{
+		Attributes: []Attribute{},
+	}
 }
 
 // GenerateID creates a unique identifier for an activity
