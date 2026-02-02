@@ -18,6 +18,7 @@ import (
 type serviceKey struct{}
 type configKey struct{}
 type timeFormatterKey struct{}
+type repositoryKey struct{}
 
 func NewRootCmd() *cobra.Command {
 	var filePath string
@@ -61,6 +62,7 @@ func NewRootCmd() *cobra.Command {
 			ctx := context.WithValue(cmd.Context(), serviceKey{}, svc)
 			ctx = context.WithValue(ctx, configKey{}, cfg)
 			ctx = context.WithValue(ctx, timeFormatterKey{}, tf)
+			ctx = context.WithValue(ctx, repositoryKey{}, repo)
 			cmd.SetContext(ctx)
 			return nil
 		},
@@ -84,6 +86,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewICalCmd())
 	cmd.AddCommand(NewVersionCmd())
 	cmd.AddCommand(NewServeCmd())
+	cmd.AddCommand(NewSyncCmd())
 	return cmd
 }
 
@@ -105,6 +108,10 @@ func getConfig(cmd *cobra.Command) *config.Config {
 
 func getTimeFormatter(cmd *cobra.Command) *timeutil.Formatter {
 	return cmd.Context().Value(timeFormatterKey{}).(*timeutil.Formatter) //nolint:errcheck // always set
+}
+
+func getRepository(cmd *cobra.Command) ports.ActivityRepository {
+	return cmd.Context().Value(repositoryKey{}).(ports.ActivityRepository) //nolint:errcheck // always set
 }
 
 func initRepository(backend, filePath string) ports.ActivityRepository {

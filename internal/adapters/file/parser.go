@@ -23,7 +23,7 @@ func ParseActivity(line string) (*models.Activity, error) {
 		return nil, ErrSkip // Not an activity line
 	}
 
-	// Format: [ID|]time|project|description[|key1=value1,key2=value2] or time|project|description (legacy)
+	// Format: [ID|]time|project|description[|attributes] or time|project|description (legacy)
 	var id, timePart, project, description string
 	var attributes []models.Attribute
 
@@ -36,7 +36,8 @@ func ParseActivity(line string) (*models.Activity, error) {
 
 		// Check for attributes in 5th part
 		if len(parts) >= 5 {
-			attributes = parseAttributes(strings.TrimSpace(parts[4]))
+			attrPart := strings.TrimSpace(parts[4])
+			attributes = parseAttributes(attrPart)
 		}
 	} else {
 		// Legacy format without ID

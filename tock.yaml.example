@@ -33,6 +33,17 @@ export:
 # time_format: "24"  # 24-hour format (default): 15:04
 # time_format: "12"  # 12-hour format: 03:04 PM
 
+# Jira integration - synchronize worklogs with Jira
+# jira:
+#   url: "https://your-domain.atlassian.net"
+#   username: "your-email@example.com"
+#   api_token: "your-api-token"
+# 
+# To sync activities with Jira:
+# 1. Add a 'jira' attribute to your activities (e.g., jira=PROJ-123)
+# 2. Run: tock sync
+# Only completed activities with jira attribute will be synced
+
 # Attribute patterns - automatically add attributes based on git branch name
 # Supports regex capture groups using $1, $2, etc. in attribute values
 # attribute_patterns:

@@ -16,6 +16,7 @@ type Config struct {
 	TimeFormat        string             `mapstructure:"time_format"`
 	Export            ExportConfig       `mapstructure:"export"`
 	AttributePatterns []AttributePattern `mapstructure:"attribute_patterns"`
+	Jira              JiraConfig         `mapstructure:"jira"`
 }
 
 type ExportConfig struct {
@@ -29,6 +30,12 @@ type ICalConfig struct {
 type AttributePattern struct {
 	Pattern    string            `mapstructure:"pattern"`
 	Attributes map[string]string `mapstructure:"attributes"`
+}
+
+type JiraConfig struct {
+	URL      string `mapstructure:"url"`
+	Username string `mapstructure:"username"`
+	APIToken string `mapstructure:"api_token"`
 }
 
 type FileConfig struct {
@@ -111,6 +118,9 @@ func Load(opts ...Option) (*Config, error) {
 	_ = v.BindEnv("theme.sub_text", "TOCK_COLOR_SUBTEXT")
 	_ = v.BindEnv("theme.faint", "TOCK_COLOR_FAINT")
 	_ = v.BindEnv("theme.highlight", "TOCK_COLOR_HIGHLIGHT")
+	_ = v.BindEnv("jira.url", "TOCK_JIRA_URL")
+	_ = v.BindEnv("jira.username", "TOCK_JIRA_USERNAME")
+	_ = v.BindEnv("jira.api_token", "TOCK_JIRA_API_TOKEN")
 
 	for _, opt := range opts {
 		opt(v)
