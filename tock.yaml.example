@@ -45,21 +45,42 @@ export:
 # Only completed activities with jira attribute will be synced
 
 # Attribute patterns - automatically add attributes based on git branch name
-# Supports regex capture groups using $1, $2, etc. in attribute values
+# Supports regex capture groups using $1, $2, etc.
+# Supports git remote variables using $remote_origin, $remote_upstream, etc.
+# Can automatically set project and description from patterns
 # attribute_patterns:
+#   # Example 1: Extract ticket from branch name and set project from remote
 #   - pattern: "^feature/(PROJ-\\d+)"
+#     project: "$remote_origin"           # Use mapped remote as project
+#     description: "Working on $1"        # Use capture group in description
 #     attributes:
 #       type: "feature"
-#       ticket: "$1"           # Will be replaced with captured group (e.g., PROJ-242)
+#       ticket: "$1"                      # Will be replaced with captured group (e.g., PROJ-242)
+#     remote_mappings:
+#       "github.com/user/repo": "MyProject"
+#       "github.com/user/other": "OtherProject"
+#
+#   # Example 2: Simple bugfix pattern
 #   - pattern: "^bugfix/.*"
+#     project: "MainProject"
 #     attributes:
 #       type: "bugfix"
 #       priority: "high"
+#
+#   # Example 3: Extract project and ticket from branch
 #   - pattern: "^([A-Z]+)-(\\d+)-.*"
+#     description: "$1-$2"                # e.g., "PROJ-242"
 #     attributes:
-#       project: "$1"          # First capture group (e.g., PROJ)
-#       ticket-id: "$2"        # Second capture group (e.g., 242)
-#       full-ref: "$0"         # Full match
+#       project: "$1"                     # First capture group (e.g., PROJ)
+#       ticket-id: "$2"                   # Second capture group (e.g., 242)
+#       full-ref: "$0"                    # Full match
+#
+#   # Example 4: Use remote URL patterns for project mapping
+#   - pattern: ".*"                       # Match any branch
+#     project: "$remote_origin"
+#     remote_mappings:
+#       ".*github\\.com/company/.*": "CompanyProject"
+#       ".*gitlab\\.com/personal/.*": "PersonalProject"
 
 # Theme configuration
 theme:

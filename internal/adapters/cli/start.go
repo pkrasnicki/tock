@@ -38,12 +38,40 @@ func NewStartCmd() *cobra.Command {
 				}
 			}
 
-			// Get attributes from git branch if in a git repository
+			// Get git context if in a git repository
 			var attributes []models.Attribute
+			gitProject := ""
+			gitDescription := ""
+
 			if gitutil.IsGitRepository("") {
-				if branch, err := gitutil.GetCurrentBranch(); err == nil {
-					attributes = matchBranchPatterns(branch, cfg.AttributePatterns)
+				branch, err := gitutil.GetCurrentBranch()
+				remotes := make(map[string]string)
+
+				if err == nil {
+					// Get remotes for variable expansion
+					if r, err := gitutil.GetRemotes(); err == nil {
+						remotes = r
+					}
+
+					// Match patterns and get project, description, and attributes
+					gitProject, gitDescription, attributes = matchBranchPatterns(branch, remotes, cfg.AttributePatterns)
 				}
+			}
+
+			// Use git-detected values if not provided via flags
+			if project == "" && gitProject != "" {
+				project = gitProject
+			}
+			if description == "" && gitDescription != "" {
+				description = gitDescription
+			}
+
+			// Validate required fields
+			if project == "" {
+				return errors.New("project is required (provide via -p flag or git pattern)")
+			}
+			if description == "" {
+				return errors.New("description is required (provide via -d flag or git pattern)")
 			}
 
 			req := dto.StartActivityRequest{
@@ -84,18 +112,13 @@ func NewStartCmd() *cobra.Command {
 	cmd.Flags().StringVarP(&description, "description", "d", "", "Activity description")
 	cmd.Flags().StringVarP(&project, "project", "p", "", "Project name")
 	cmd.Flags().StringVarP(&at, "time", "t", "", "Start time (HH:MM)")
-	if err := cmd.MarkFlagRequired("description"); err != nil {
-		panic(err)
-	}
-	if err := cmd.MarkFlagRequired("project"); err != nil {
-		panic(err)
-	}
 
 	return cmd
 }
 
-// matchBranchPatterns matches the branch name against configured patterns and returns attributes
-func matchBranchPatterns(branch string, patterns []config.AttributePattern) []models.Attribute {
+// matchBranchPatterns matches the branch name against configured patterns and returns project, description, and attributes
+func matchBranchPatterns(branch string, remotes map[string]string, patterns []config.AttributePattern) (string, string, []models.Attribute) {
+	var project, description string
 	var attributes []models.Attribute
 
 	for _, pattern := range patterns {
@@ -109,23 +132,60 @@ func matchBranchPatterns(branch string, patterns []config.AttributePattern) []mo
 			continue
 		}
 
-		// Add all attributes from the matched pattern
-		// Replace $1, $2, etc. with captured groups
-		for key, value := range pattern.Attributes {
-			expandedValue := value
+		// Build variables map for expansion
+		variables := make(map[string]string)
 
-			// Replace $0 with full match, $1 with first group, etc.
-			for i, match := range matches {
-				placeholder := fmt.Sprintf("$%d", i)
-				expandedValue = regexp.MustCompile(regexp.QuoteMeta(placeholder)).ReplaceAllString(expandedValue, match)
+		// Add capture groups ($0, $1, $2, etc.)
+		for i, match := range matches {
+			variables[fmt.Sprintf("$%d", i)] = match
+		}
+
+		// Add remote variables ($remote_origin, $remote_upstream, etc.)
+		for remoteName, remoteURL := range remotes {
+			varName := fmt.Sprintf("$remote_%s", remoteName)
+
+			// Check if there's a mapping for this remote URL
+			mappedValue := remoteURL
+			if pattern.RemoteMappings != nil {
+				for urlPattern, mappedName := range pattern.RemoteMappings {
+					// Support both exact match and regex pattern
+					if urlPattern == remoteURL || regexp.MustCompile(urlPattern).MatchString(remoteURL) {
+						mappedValue = mappedName
+						break
+					}
+				}
 			}
 
+			variables[varName] = mappedValue
+		}
+
+		// Expand project if specified in pattern
+		if pattern.Project != "" && project == "" {
+			project = expandVariables(pattern.Project, variables)
+		}
+
+		// Expand description if specified in pattern
+		if pattern.Description != "" && description == "" {
+			description = expandVariables(pattern.Description, variables)
+		}
+
+		// Add all attributes from the matched pattern
+		for key, value := range pattern.Attributes {
 			attributes = append(attributes, models.Attribute{
 				Key:   key,
-				Value: expandedValue,
+				Value: expandVariables(value, variables),
 			})
 		}
 	}
 
-	return attributes
+	return project, description, attributes
+}
+
+// expandVariables replaces all variable placeholders in the template string
+func expandVariables(template string, variables map[string]string) string {
+	result := template
+	for varName, varValue := range variables {
+		result = regexp.MustCompile(regexp.QuoteMeta(varName)).ReplaceAllString(result, varValue)
+	}
+	return result
 }

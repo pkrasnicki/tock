@@ -28,8 +28,11 @@ type ICalConfig struct {
 }
 
 type AttributePattern struct {
-	Pattern    string            `mapstructure:"pattern"`
-	Attributes map[string]string `mapstructure:"attributes"`
+	Pattern        string            `mapstructure:"pattern"`
+	Project        string            `mapstructure:"project"`
+	Description    string            `mapstructure:"description"`
+	Attributes     map[string]string `mapstructure:"attributes"`
+	RemoteMappings map[string]string `mapstructure:"remote_mappings"`
 }
 
 type JiraConfig struct {
