@@ -120,6 +120,11 @@ func (r *repository) FindLast(_ context.Context) (*models.Activity, error) {
 }
 
 func (r *repository) Save(_ context.Context, activity models.Activity) error {
+	// Ensure activity has an ID - generate one if missing
+	if activity.ID == "" {
+		activity.ID = models.GenerateStableID(activity.StartTime, activity.Project, activity.Description)
+	}
+
 	lines, err := r.readLines()
 	if err != nil {
 		if !os.IsNotExist(err) {
