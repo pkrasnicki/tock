@@ -29,5 +29,10 @@ func (h *Handler) Remove(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Broadcast the event if broadcaster is enabled
+	if h.broadcaster != nil {
+		h.broadcaster.BroadcastActivityRemoved(req.ID)
+	}
+
 	w.WriteHeader(http.StatusNoContent)
 }

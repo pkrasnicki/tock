@@ -1,0 +1,60 @@
+### Subscribe to Activity Events (Long-Polling)
+# This endpoint will wait for up to 60 seconds for an event to occur
+# If no event occurs, it returns 204 No Content
+# If an event occurs, it returns the event details immediately
+# Call this endpoint repeatedly to continuously receive events
+
+GET http://localhost:8080/activity/events
+Content-Type: application/json
+
+###
+
+# Example response when an activity starts:
+# {
+#   "type": "activity_started",
+#   "activity": {
+#     "id": "20240205120000",
+#     "description": "Working on feature X",
+#     "project": "MyProject",
+#     "start": "2024-02-05T12:00:00Z"
+#   },
+#   "timestamp": "2024-02-05T12:00:00Z"
+# }
+
+###
+
+# Example response when an activity stops:
+# {
+#   "type": "activity_stopped",
+#   "activity": {
+#     "id": "20240205120000",
+#     "description": "Working on feature X",
+#     "project": "MyProject",
+#     "start": "2024-02-05T12:00:00Z",
+#     "end": "2024-02-05T13:00:00Z"
+#   },
+#   "timestamp": "2024-02-05T13:00:00Z"
+# }
+
+###
+
+# Example response when an activity is added:
+# {
+#   "type": "activity_added",
+#   "activity": {
+#     "id": "20240205110000",
+#     "description": "Meeting",
+#     "project": "Admin",
+#     "start": "2024-02-05T11:00:00Z",
+#     "end": "2024-02-05T11:30:00Z"
+#   },
+#   "timestamp": "2024-02-05T13:00:05Z"
+# }
+
+###
+
+# Example response when an activity is removed:
+# {
+#   "type": "activity_removed",
+#   "timestamp": "2024-02-05T13:00:10Z"
+# }
