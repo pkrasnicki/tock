@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	httpAdapter "github.com/kriuchkov/tock/internal/adapters/http"
+	"github.com/kriuchkov/tock/internal/jira"
 	"github.com/spf13/cobra"
 )
 
@@ -19,8 +20,22 @@ func NewServeCmd() *cobra.Command {
 		Long:  "Start an HTTP server that exposes activity management endpoints",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			svc := getService(cmd)
+			cfg := getConfig(cmd)
 
-			var handler *httpAdapter.Handler
+			// Initialize Jira client if configured
+			var jiraClient *jira.Client
+			if cfg.Jira.URL != "" && cfg.Jira.Username != "" && cfg.Jira.APIToken != "" {
+				jiraClient = jira.NewClient(cfg.Jira.URL, cfg.Jira.Username, cfg.Jira.APIToken)
+				fmt.Println("Jira integration enabled")
+			}
+
+			// Build handler options
+			handlerOpts := httpAdapter.HandlerOptions{
+				Service:    svc,
+				JiraClient: jiraClient,
+			}
+
+			// Configure CORS if specified
 			if corsOrigins != "" {
 				// Parse comma-separated origins
 				origins := strings.Split(corsOrigins, ",")
@@ -36,11 +51,10 @@ func NewServeCmd() *cobra.Command {
 					AllowCredentials: false,
 					MaxAge:           300,
 				}
-				handler = httpAdapter.NewHandlerWithCORS(svc, corsConfig)
-			} else {
-				handler = httpAdapter.NewHandler(svc)
+				handlerOpts.CORSConfig = &corsConfig
 			}
 
+			handler := httpAdapter.NewHandlerWithOptions(handlerOpts)
 			handler.RegisterRoutes()
 
 			addr := fmt.Sprintf(":%d", port)

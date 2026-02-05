@@ -174,3 +174,81 @@ func NewComment(text string) *Comment {
 		},
 	}
 }
+
+// IssueSearchResult represents the response from Jira issue search
+type IssueSearchResult struct {
+	Issues []Issue `json:"issues"`
+	Total  int     `json:"total"`
+}
+
+// Issue represents a simplified Jira issue
+type Issue struct {
+	Key    string      `json:"key"`
+	Fields IssueFields `json:"fields"`
+}
+
+// IssueFields represents the fields of a Jira issue
+type IssueFields struct {
+	Summary string `json:"summary"`
+}
+
+// SearchRequest represents the request body for Jira search API
+type SearchRequest struct {
+	JQL        string   `json:"jql"`
+	MaxResults int      `json:"maxResults"`
+	Fields     []string `json:"fields"`
+}
+
+// SearchIssues searches for Jira issues using JQL (Jira Query Language)
+// Returns issues matching the query, limited to maxResults
+func (c *Client) SearchIssues(query string, maxResults int) ([]Issue, error) {
+	if maxResults <= 0 {
+		maxResults = 10
+	}
+	if maxResults > 50 {
+		maxResults = 50 // Cap at 50 to prevent large responses
+	}
+
+	// Build JQL query to search in summary and key
+	jql := fmt.Sprintf("text ~ \"%s*\" OR key ~ \"%s*\" ORDER BY updated DESC", query, query)
+
+	searchReq := SearchRequest{
+		JQL:        jql,
+		MaxResults: maxResults,
+		Fields:     []string{"summary", "key"},
+	}
+
+	body, err := json.Marshal(searchReq)
+	if err != nil {
+		return nil, errors.Wrap(err, "marshal request")
+	}
+
+	url := fmt.Sprintf("%s/rest/api/3/search/jql", c.baseURL)
+
+	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, errors.Wrap(err, "create request")
+	}
+
+	httpReq.SetBasicAuth(c.username, c.apiToken)
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return nil, errors.Wrap(err, "execute request")
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return nil, errors.Errorf("jira API error: %d - %s", resp.StatusCode, string(bodyBytes))
+	}
+
+	var result IssueSearchResult
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, errors.Wrap(err, "decode response")
+	}
+
+	return result.Issues, nil
+}

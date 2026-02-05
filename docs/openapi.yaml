@@ -25,6 +25,8 @@ servers:
 tags:
   - name: Activity
     description: Time tracking activity operations
+  - name: Jira
+    description: Jira integration operations
 
 paths:
   /activity/start:
@@ -559,6 +561,97 @@ paths:
               schema:
                 type: string
 
+  /jira/suggest:
+    get:
+      tags:
+        - Jira
+      summary: Get Jira issue suggestions (autosuggest)
+      description: |
+        Returns Jira issue suggestions based on a search query. This endpoint is designed for 
+        autosuggest/autocomplete functionality when users type Jira issue keys or summaries.
+        
+        **Requirements:**
+        - Jira integration must be configured (URL, username, API token)
+        - Query parameter must be at least 2 characters
+        
+        **Search Behavior:**
+        - Searches both issue keys (e.g., "PROJ-123") and issue summaries
+        - Returns matching issues ordered by most recently updated
+        - Default limit is 10 results, maximum is 50
+        
+        **Use Case:**
+        When adding activities with Jira attributes, this endpoint helps users quickly find and 
+        select the correct Jira issue key without manually looking it up in Jira.
+      operationId: getJiraSuggestions
+      parameters:
+        - name: q
+          in: query
+          description: Search query (minimum 2 characters) - searches in issue keys and summaries
+          required: true
+          schema:
+            type: string
+            minLength: 2
+          example: "BACKEND"
+        - name: limit
+          in: query
+          description: Maximum number of suggestions to return (default 10, max 50)
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          example: 10
+      responses:
+        '200':
+          description: List of Jira issue suggestions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JiraSuggestResponse'
+              examples:
+                default:
+                  summary: Successful suggestions response
+                  value:
+                    query: "BACKEND"
+                    suggestions:
+                      - key: "BACKEND-123"
+                        summary: "Implement user authentication"
+                      - key: "BACKEND-124"
+                        summary: "Add API rate limiting"
+                      - key: "BACKEND-125"
+                        summary: "Fix database connection pool"
+        '400':
+          description: Bad request - missing or invalid query parameter
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                missingQuery:
+                  value: "query parameter 'q' is required"
+                tooShort:
+                  value: "query must be at least 2 characters"
+        '405':
+          description: Method not allowed (only GET is supported)
+          content:
+            text/plain:
+              schema:
+                type: string
+        '500':
+          description: Internal server error - failed to search Jira
+          content:
+            text/plain:
+              schema:
+                type: string
+        '503':
+          description: Service unavailable - Jira integration not configured
+          content:
+            text/plain:
+              schema:
+                type: string
+              example: "Jira integration not configured"
+
 components:
   schemas:
     Activity:
@@ -775,3 +868,36 @@ components:
           format: date-time
           description: When the event occurred (RFC3339 format)
           example: "2026-02-05T12:00:00Z"
+
+    JiraSuggestResponse:
+      type: object
+      description: Response containing Jira issue suggestions for autosuggest functionality
+      required:
+        - query
+        - suggestions
+      properties:
+        query:
+          type: string
+          description: The search query that was used
+          example: "BACKEND"
+        suggestions:
+          type: array
+          description: List of matching Jira issues
+          items:
+            $ref: '#/components/schemas/JiraSuggestion'
+
+    JiraSuggestion:
+      type: object
+      description: A single Jira issue suggestion
+      required:
+        - key
+        - summary
+      properties:
+        key:
+          type: string
+          description: Jira issue key (e.g., PROJECT-123)
+          example: "BACKEND-123"
+        summary:
+          type: string
+          description: Brief description of the Jira issue
+          example: "Implement user authentication"
