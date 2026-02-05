@@ -13,6 +13,7 @@ type Handler struct {
 	corsConfig  CORSConfig
 	broadcaster *EventBroadcaster
 	jiraClient  *jira.Client
+	verbose     bool
 }
 
 func NewHandler(service ports.ActivityResolver) *Handler {
@@ -60,6 +61,7 @@ type HandlerOptions struct {
 	CORSConfig  *CORSConfig
 	Broadcaster *EventBroadcaster
 	JiraClient  *jira.Client
+	Verbose     bool
 }
 
 // NewHandlerWithOptions creates a new handler with all optional configurations
@@ -79,21 +81,24 @@ func NewHandlerWithOptions(opts HandlerOptions) *Handler {
 		corsConfig:  cors,
 		broadcaster: broadcaster,
 		jiraClient:  opts.JiraClient,
+		verbose:     opts.Verbose,
 	}
 }
 
 // RegisterRoutes registers all activity routes with the default ServeMux
 func (h *Handler) RegisterRoutes() {
 	cors := CORSMiddleware(h.corsConfig)
+	logging := LoggingMiddleware(h.verbose)
 
-	http.HandleFunc("/activity/start", cors(h.Start))
-	http.HandleFunc("/activity/stop", cors(h.Stop))
-	http.HandleFunc("/activity/add", cors(h.Add))
-	http.HandleFunc("/activity/remove", cors(h.Remove))
-	http.HandleFunc("/activity/list", cors(h.List))
-	http.HandleFunc("/activity/current", cors(h.Current))
-	http.HandleFunc("/activity/recent", cors(h.Recent))
-	http.HandleFunc("/activity/report", cors(h.Report))
-	http.HandleFunc("/activity/events", cors(h.Events))
-	http.HandleFunc("/jira/suggest", cors(h.JiraSuggest))
+	// Chain middleware: logging -> cors -> handler
+	http.HandleFunc("/activity/start", logging(cors(h.Start)))
+	http.HandleFunc("/activity/stop", logging(cors(h.Stop)))
+	http.HandleFunc("/activity/add", logging(cors(h.Add)))
+	http.HandleFunc("/activity/remove", logging(cors(h.Remove)))
+	http.HandleFunc("/activity/list", logging(cors(h.List)))
+	http.HandleFunc("/activity/current", logging(cors(h.Current)))
+	http.HandleFunc("/activity/recent", logging(cors(h.Recent)))
+	http.HandleFunc("/activity/report", logging(cors(h.Report)))
+	http.HandleFunc("/activity/events", logging(cors(h.Events)))
+	http.HandleFunc("/jira/suggest", logging(cors(h.JiraSuggest)))
 }

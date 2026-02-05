@@ -13,6 +13,7 @@ import (
 func NewServeCmd() *cobra.Command {
 	var port int
 	var corsOrigins string
+	var verbose bool
 
 	cmd := &cobra.Command{
 		Use:   "serve",
@@ -33,6 +34,7 @@ func NewServeCmd() *cobra.Command {
 			handlerOpts := httpAdapter.HandlerOptions{
 				Service:    svc,
 				JiraClient: jiraClient,
+				Verbose:    verbose,
 			}
 
 			// Configure CORS if specified
@@ -59,12 +61,16 @@ func NewServeCmd() *cobra.Command {
 
 			addr := fmt.Sprintf(":%d", port)
 			fmt.Printf("Starting HTTP Server on %s\n", addr)
+			if verbose {
+				fmt.Println("Access logging enabled")
+			}
 			return http.ListenAndServe(addr, nil)
 		},
 	}
 
 	cmd.Flags().IntVarP(&port, "port", "p", 8080, "Port to listen on")
 	cmd.Flags().StringVar(&corsOrigins, "cors-origins", "", "Comma-separated list of allowed CORS origins (default: * for all origins)")
+	cmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable access logging for HTTP requests")
 
 	return cmd
 }
